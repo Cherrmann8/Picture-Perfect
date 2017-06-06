@@ -90,14 +90,20 @@ class pdf_maker(object):
                     if self.head[1]:
                         c.drawString(inch*0.5, inch*10.5, "Filename: "+self.filename)
                     if self.head[2]:
-                        c.drawString(inch*0.5, inch*10.3, "Date: "+date.today().strftime("%B %d, %Y"))
+                        try:
+                            c.drawString(inch*0.5, inch*10.3, "Date: "+date.today().strftime("%B %d, %Y"))
+                        except KeyError:
+                            print "Exif section corrupted..."
                 if self.foot[0]:
                     if self.foot[3]:
                         c.drawCentredString(inch*4.25, inch*0.3, str(page))
                     if self.foot[1]:
                         c.drawString(inch*0.5, inch*0.7, "Filename: "+self.filename)
                     if self.foot[2]:
-                        c.drawString(inch*0.5, inch*0.5, "Date: "+date.today().strftime("%B %d, %Y"))
+                        try:
+                            c.drawString(inch*0.5, inch*0.5, "Date: "+date.today().strftime("%B %d, %Y"))
+                        except KeyError:
+                            print "Exif section corrupted..."
                 new_page = False
             name = os.path.join(pic[0], pic[1])
             c.drawImage(image=name, x=inch*px, y=inch*py, width=inch*self.size,
@@ -129,6 +135,8 @@ class pdf_maker(object):
                     tmpy+=0.11
                     c.drawString(inch*px, inch*(py-tmpy), picDate.split()[0])
                 except TypeError:
+                    pass
+                except KeyError:
                     pass
             c.setFont("Helvetica", 10)
             count += 1
@@ -302,9 +310,9 @@ class selection(tk.Frame):
                     except IOError:
                         print(file, "corrupted...")
                         corrupt.append(file)
-                    except OverflowError:
-                        print (file, "has bad EXIF tag...")
-                        corrupt.append(file)
+                    #except OverflowError:
+                    #    print (file, "has bad EXIF tag...")
+                    #    corrupt.append(file)
                     stat.update("status: loading ["+str(count)+"/"+str(num_pics)+"]")
                 if len(corrupt) != 0:
                     stat.finish("status: the following files could not be loaded. " +
