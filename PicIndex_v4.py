@@ -199,6 +199,8 @@ class pic_widget(tk.Frame):
         self.label.bind("<Button-1>", self.single_click)
         self.label.bind("<Button-3>", self.double_click)
         
+        print(self.name, "widget loaded...")
+        
     def single_click(self, event):
         self.clicked()
             
@@ -245,7 +247,6 @@ class selection(tk.Frame):
         self.pics = {}
         self.packing_width = 1
         self.pic_size = 150
-        self.num_pics = 0
         self.num_sel = 0
         
         # Setup widgets
@@ -273,8 +274,11 @@ class selection(tk.Frame):
         # Bindings
         self.pictures.bind("<Configure>", self.pictures_resized)
         
+        print "Selection loaded..."
+        
     def new_dir_selection(self):
-        if self.num_pics != 0:
+        print "New selection..."
+        if len(self.pics) != 0:
             if not tkMessageBox.askyesno("Warning!", "Would you like to keep the pictures already loaded?"):
                 self.clear()
         self.working_dir = ""
@@ -283,20 +287,23 @@ class selection(tk.Frame):
             self.working_dir = temp
         if self.working_dir != "":
             jpgs = [f for f in os.listdir(self.working_dir) if (f.endswith(".JPG") or f.endswith(".jpg"))]
-            self.num_pics = len(jpgs)
-            if self.num_pics != 0:
+            num_pics = len(jpgs)
+            if num_pics != 0:
+                print (num_pics, "found...")
                 count = 0
                 corrupt = []
                 stat = status()
-                stat.update("status: loading ["+str(count)+"/"+str(self.num_pics)+"]")
+                stat.update("status: loading ["+str(count)+"/"+str(num_pics)+"]")
                 for file in jpgs:
                     try:
                         lb = pic_widget(self.canvas, self.working_dir, file, self.pic_size, self.change_in_sel)
                         self.pics[file] = lb
                         count += 1
+                        print(file, "loaded...")
                     except IOError:
+                        print(file, "corrupted...")
                         corrupt.append(file)
-                    stat.update("status: loading ["+str(count)+"/"+str(self.num_pics)+"]")
+                    stat.update("status: loading ["+str(count)+"/"+str(num_pics)+"]")
                 if len(corrupt) != 0:
                     stat.finish("status: the following files could not be loaded. " +
                             "Possibly corrupted.\n\n", corrupt)
@@ -317,6 +324,7 @@ class selection(tk.Frame):
         self.update()
 
     def update(self):
+        print "updating selection..."
         c = r = 0
         keys = sorted(self.pics)
         for key in keys:
@@ -454,6 +462,8 @@ class formation(tk.Frame):
         self.button3.pack(side=tk.LEFT, fill='x', expand=1)
         self.button4.pack(side=tk.LEFT, fill='x', expand=1)
         
+        print "Formation loaded..."
+        
     def update_var(self, num=None):
         if num:
             self.num_sel = num
@@ -550,6 +560,7 @@ class main_app(tk.Frame):
         return "break"
 
 if __name__ == "__main__":
+    print ("File start up...")
     root = tk.Tk()
     main_app(root).pack(fill=tkc.BOTH, expand=True)
     root.mainloop()
