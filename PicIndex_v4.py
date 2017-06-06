@@ -187,7 +187,7 @@ class pic_widget(tk.Frame):
         self.chng = chng
         self.image = Image.open(os.path.join(path, name))
         self.image.thumbnail((self.size-10, self.size-10))
-        self.photo = ImageTk.PhotoImage(file=tmp)
+        self.photo = ImageTk.PhotoImage(self.image)
         self.img = tk.Label(self, image=self.photo)
         self.img.place(x=self.size/2, y=self.size/2, anchor=tk.CENTER)
         self.label = tk.Label(self, text=self.name)
