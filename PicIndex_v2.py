@@ -2,7 +2,6 @@ import Tkinter as tk
 import tkMessageBox
 import Tkconstants as tkc
 import tkFileDialog
-from ttk import Progressbar
 from PIL import Image, ImageTk
 import os
 import threading
@@ -14,18 +13,16 @@ rT = 'sunken'
 bW = 2
 
 class pdf_thread(threading.Thread):
-    def __init__(self, status):
+    def __init__(self):
         threading.Thread.__init__(self)
         self.running = False
         self.filename = ""
         self.pics = []
-        self.status = status
         
     def run(self):
-        self.status("status: loading")
         c = canvas.Canvas(self.filename, pagesize=letter)
         #c.drawString(inch, inch*0.5, self.filename)
-        py = 10.8-self.size
+        py = 10.5-self.size
         px = 0.5
         x = 0
         count = 0
@@ -33,7 +30,7 @@ class pdf_thread(threading.Thread):
             name = os.path.join(self.path, pic)
             count += 1
             c.drawImage(image=name, x=inch*px, y=inch*py, width=inch*self.size,
-                    height=inch*self.size, preserveAspectRatio=1)
+                    height=inch*self.size, preserveAspectRatio=0)
             c.drawString(inch*px, inch*(py-0.125), pic)
             px += self.size+0.25
             x += 1
@@ -46,7 +43,6 @@ class pdf_thread(threading.Thread):
                     py = 10.5-self.size
         c.showPage()
         c.save()
-        self.status("status: ready")
         
     def is_running(self):
         return self.running
@@ -60,45 +56,26 @@ class pdf_thread(threading.Thread):
         self.size = (8.5 - (((cols-1)*0.25)+1.0))/cols
         
 class pic_widget(tk.Label):
-    def __init__(self, parent, path, name, size):
+    def __init__(self, parent, path, name, size, event):
         self.selected = False
         self.path = path
         self.name = name
         self.size = size
+        self.event = event
         tk.Label.__init__(self, parent, text=self.name, compound=tkc.TOP, borderwidth=1, relief=rT)
         self.image = Image.open(os.path.join(path, name))
         self.set_thumbnail()
-        self.bind("<Button-1>", self.single_click)
-        self.bind("<Double-Button-1>", self.double_click)
+        self.bind("<Button-1>", self.clicked)
         
     def set_thumbnail(self):
         im = self.image.copy()
-        im.thumbnail((self.size, self.size))
+        im.thumbnail((self.size-5, self.size-5))
         self.photo = ImageTk.PhotoImage(im)
         self.configure(image=self.photo)
         
-    def single_click(self, event):
+    def clicked(self, event):
         #if (event.state & 0x0001):
         #    self.master.master.master.shift_select(self.name)
-        self.after(200)
-        self.clicked()
-            
-    def double_click(self, event):
-        self.clicked()
-        top = tk.Toplevel()
-        top.title(self.name)
-        tmp = self.image.copy()
-        tmp.thumbnail((600, 600))
-        photo = ImageTk.PhotoImage(tmp)
-        l = tk.Label(top, image=photo)
-        l.pack()
-        self.tmp = photo
-        #c = tk.Canvas(top, width=1000, height=1000)
-        #c.pack()
-        #c.create_image((500, 500), image=photo)
-        #c.image = photo
-        
-    def clicked(self):
         if self.selected:
             self.unselect()
         else:
@@ -107,10 +84,12 @@ class pic_widget(tk.Label):
     def unselect(self):
         self.configure(background='light grey')
         self.selected=False
+        self.event(-1)
         
     def select(self):
         self.configure(background='yellow')
         self.selected=True
+        self.event(1)
     
     def is_selected(self):
         return self.selected
@@ -131,7 +110,7 @@ class selection(tk.Frame):
         self.pics = {}
         self.packing_width = 1
         self.pic_size = 150
-        self.prog = event
+        self.event = event
         self.status = status
         
         # Setup widgets
@@ -140,6 +119,9 @@ class selection(tk.Frame):
         self.sel_dir = tk.Button(self.buttons, text='Select Directory', command=self.new_dir_selection)
         self.sel_all = tk.Button(self.buttons, text='Select All', command=self.select_all)
         self.sel_non = tk.Button(self.buttons, text='Select None', command=self.select_none)
+        self.big = tk.Button(self.buttons, text='Enlarge', command=self.enlarge)
+        self.sml = tk.Button(self.buttons, text='Shrink', command=self.shrink)
+        self.clear = tk.Button(self.buttons, text='Remove Unselected', command=self.clear)
         self.scrollbar = tk.Scrollbar(self.pictures)
         self.canvas = tk.Canvas(self.pictures, yscrollcommand=self.scrollbar.set)
         
@@ -149,6 +131,9 @@ class selection(tk.Frame):
         self.sel_dir.pack(fill='x')
         self.sel_all.pack(fill='x')
         self.sel_non.pack(fill='x')
+        self.clear.pack(fill='x')
+        self.big.pack(fill='x')
+        self.sml.pack(fill='x')
         self.scrollbar.pack(side=tkc.RIGHT, fill=tkc.Y)
         self.canvas.pack(side=tkc.LEFT, fill=tkc.BOTH)
         self.scrollbar.config(command=self.canvas.yview)
@@ -156,19 +141,13 @@ class selection(tk.Frame):
         
     def new_dir_selection(self):
         self.working_dir = tkFileDialog.askdirectory(initialdir="/home/charles/Desktop/picidxer", title="Select Directory")
-        num = len([f for f in os.listdir(self.working_dir) if f.endswith(".JPG")])
-        if num != 0:
-            self.status("status: loading")
-            step = 100/num
-            for file in os.listdir(self.working_dir):
-                if file.endswith(".JPG") and file not in self.pics:
-                    lb = pic_widget(self.canvas, self.working_dir, file, self.pic_size)
-                    self.pics[file] = lb
-                    self.prog(step)
-            self.update()
-            self.status("status: ready")
-        else:
-            self.status("status: no pics found")
+        self.status("loading")
+        for file in os.listdir(self.working_dir):
+            if file.endswith(".JPG") and file not in self.pics:
+                lb = pic_widget(self.canvas, self.working_dir, file, self.pic_size, self.event)
+                self.pics[file] = lb
+        self.update()
+        self.status("waiting")
         
     def clear(self):
         to_remove = []
@@ -197,12 +176,31 @@ class selection(tk.Frame):
         else:
             height = (r+1)*self.pic_size
         self.canvas.config(scrollregion=(0,0,0,height))
+                
+    def enlarge(self):
+        if self.pic_size < 300:
+            self.pic_size += 50
+            self.resized(1)
+        
+    def shrink(self):
+        if self.pic_size > 50:
+            self.pic_size -= 50
+            self.resized(-1)
 
     def pictures_resized(self, e):
         if (self.packing_width != (e.width // self.pic_size) and (e.width // self.pic_size) != 0):
             self.packing_width = (e.width // self.pic_size)
             self.canvas.config(width=e.width, height=e.height)
             self.update()
+            
+    def resized(self, change):
+        self.packing_width = (self.pictures.winfo_width() // self.pic_size)
+        keys = sorted(self.pics)
+        for key in keys:
+            self.pics[key].resize(self.pic_size)
+            self.canvas.itemconfigure(key, width=self.pic_size, height=self.pic_size)
+            ##self.canvas.move(key, change*c*50, change*r*50)
+        self.update()
     
     def select_all(self):
         for key in self.pics:
@@ -260,17 +258,19 @@ class main_app(tk.Frame):
         
         # Setup main Frames
         self.format = tk.Frame(self, relief=rT, borderwidth=bW)
-        self.select = selection(self, self.prog, self.update_status)
+        self.select = selection(self, self.event, self.update_status)
         
         # Setup widgets
         self.title = tk.Entry(self.format)
         self.tlabel = tk.Label(self.format, text="Title")
-        self.column = tk.Spinbox(self.format, from_=1, to=8, width=2)
+        self.column = tk.Spinbox(self.format, from_=1, to=8, width=2, command=self.refig)
         self.clabel = tk.Label(self.format, text="Columns")
         self.ilabel = tk.Label(self.format, text="")
-        self.prev = tk.Button(self.format, text="Preview", command=self.preview, width=10)
-        self.status = tk.Label(self.format, text="status: ready")
-        self.progress = Progressbar(self.format, length=150)
+        self.prev = tk.Button(self.format, text="Generate", command=self.preview, width=10)
+        #self.nlabel = tk.Label(self.format, text=str(self.sel_count)+" selected")
+        #self.rlabel = tk.Label(self.format, text="0 pages required")
+        self.status = tk.Label(self.format, text="status:")
+        self.slabel = tk.Label(self.format, text="waiting")
         
         # Pack all widgets
         self.format.pack(side=tkc.TOP, fill=tkc.X)
@@ -284,29 +284,31 @@ class main_app(tk.Frame):
         #self.rlabel.grid(column=3, row=1, sticky=tkc.E)
         self.format.columnconfigure(3, weight=1)
         self.status.grid(column=4, row=0, sticky=tkc.W)
-        
+        self.slabel.grid(column=4, row=1, sticky=tkc.W)
         self.format.columnconfigure(5, weight=1)
         self.prev.grid(column=6, row=0, sticky=tkc.E, rowspan=2)
     
     def update_status(self, status):
-        self.progress.grid(column=4, row=1)
-        self.status.configure(text=status)
+        self.slabel.configure(text=status)
         self.update_idletasks()
     
-    def prog(self, by):
-        self.progress.step(by)
-        self.update_idletasks()
+    def event(self, by):
+        self.sel_count += by
+        #self.nlabel.configure(text=str(self.sel_count)+" selected")
+        self.refig()
+        
+    def refig(self):
+        total = self.sel_count // (int(self.column.get())**2)
+        #self.rlabel.configure(text="about "+str(total)+" pages required")
         
     def preview(self):
         if self.title.get() == "":
             tkMessageBox.showinfo("Warning!", "Document needs a title!")
             return
         if self.select.count_selected() == 0:
-            if tkMessageBox.askyesno("Warning!", "No pictures selected!\nSelect all pictures?"):
-                self.select.select_all()
-            else:
-                return
-        thread = pdf_thread(self.update_status)
+            tkMessageBox.showinfo("Warning!", "No pictures selected!")
+            return
+        thread = pdf_thread()
         self.threads.append(thread)
         thread.set_variables(self.title.get()+".pdf",
                 self.select.working_dir, self.select.get_pics(), 
