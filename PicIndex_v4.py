@@ -187,7 +187,7 @@ class pic_widget(tk.Frame):
         self.chng = chng
         self.image = Image.open(os.path.join(path, name))
         self.image.thumbnail((self.size-10, self.size-10))
-        self.photo = ImageTk.PhotoImage(self.image)
+        self.photo = ImageTk.PhotoImage(file=tmp)
         self.img = tk.Label(self, image=self.photo)
         self.img.place(x=self.size/2, y=self.size/2, anchor=tk.CENTER)
         self.label = tk.Label(self, text=self.name)
@@ -299,9 +299,11 @@ class selection(tk.Frame):
                         lb = pic_widget(self.canvas, self.working_dir, file, self.pic_size, self.change_in_sel)
                         self.pics[file] = lb
                         count += 1
-                        print(file, "loaded...")
                     except IOError:
                         print(file, "corrupted...")
+                        corrupt.append(file)
+                    except OverflowError:
+                        print (file, "has bad EXIF tag...")
                         corrupt.append(file)
                     stat.update("status: loading ["+str(count)+"/"+str(num_pics)+"]")
                 if len(corrupt) != 0:
