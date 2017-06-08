@@ -292,7 +292,7 @@ class selection(tk.Frame):
         self.sel_dir = tk.Button(self.buttons, text='Select Directory', command=self.new_dir_selection)
         self.sel_all = tk.Button(self.buttons, text='Select All', command=self.select_all)
         self.sel_non = tk.Button(self.buttons, text='Select None', command=self.select_none)
-        self.format = tk.Button(self.buttons, text='format', command=self.parent.step2)
+        self.format = tk.Button(self.buttons, text='Format', command=self.parent.step2)
         
         self.scrollbar = tk.Scrollbar(self.pictures, width=10)
         self.canvas = tk.Canvas(self.pictures, width=450, 
