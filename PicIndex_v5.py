@@ -10,10 +10,16 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from datetime import date
 import math
-import jpeg
+import win32api
+import win32print
+from win32com import client
+import time
 
 rT = 'ridge'
 bW = 2
+
+GHOSTSCRIPT_PATH = "G:\\Picture Perfect\\GHOSTSCRIPT\\bin\\gswin32.exe"
+GSPRINT_PATH = "G:\Picture Perfect\Ghostgum\gsview\gsprint.exe"
 
 class status(tk.Tk):
     def __init__(self, width=250, height=125):
@@ -587,6 +593,7 @@ class main_app(tk.Frame):
                 int(self.format.column.get()), self.format.var3.get(),
                 self.format.var4.get(), self.format.var5.get(), 
                 header, footer) == 1:
+            self.fhdr.destroy()
             self.maker.run()
         
     def exit(self, e):
@@ -598,7 +605,13 @@ class main_app(tk.Frame):
         return "break"
 
 if __name__ == "__main__":
-    #print ("File start up...")
-    root = tk.Tk()
-    main_app(root).pack(fill=tkc.BOTH, expand=True)
-    root.mainloop()
+    print ("File start up...")
+
+    currentprinter = win32print.GetDefaultPrinter()
+    command = '-ghostscript "'+GHOSTSCRIPT_PATH+'" -printer "'+currentprinter+'" "test.pdf"'
+    print command
+    win32api.ShellExecute(0, 'open', GSPRINT_PATH, command, '.', 0)
+    
+    #root = tk.Tk()
+    #main_app(root).pack(fill=tkc.BOTH, expand=True)
+    #root.mainloop()
