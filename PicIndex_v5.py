@@ -169,16 +169,12 @@ class pdf_maker(object):
             stat.update("status: loading ["+str(count-1)+"/"+str(self.num_pics)+"]")
         stat.kill()
         c.save()
+        currentprinter = win32print.GetDefaultPrinter()
+        command = '-ghostscript "'+GHOSTSCRIPT_PATH+'" -printer "'+currentprinter+'" "'+self.filename+'"'
+        win32api.ShellExecute(0, 'open', GSPRINT_PATH, command, '.', 0)
         
     def set_variables(self, name, path, pics, cols, b, fn, d, h, f):
-        if tkMessageBox.askyesno("Path to save PDF?", "Would you like to save PDF\nin picture directory?"):
-            self.filename = path+"/"+name
-        else:
-            temp = tkFileDialog.askdirectory(initialdir=path, title="Select Directory")
-            if temp:
-                self.filename = temp+"/"+name
-            else:
-                return 0
+        self.filename = path+"/"+name
         self.name = name
         self.path = path
         self.pics = pics
@@ -606,12 +602,7 @@ class main_app(tk.Frame):
 
 if __name__ == "__main__":
     print ("File start up...")
-
-    currentprinter = win32print.GetDefaultPrinter()
-    command = '-ghostscript "'+GHOSTSCRIPT_PATH+'" -printer "'+currentprinter+'" "test.pdf"'
-    print command
-    win32api.ShellExecute(0, 'open', GSPRINT_PATH, command, '.', 0)
     
-    #root = tk.Tk()
-    #main_app(root).pack(fill=tkc.BOTH, expand=True)
-    #root.mainloop()
+    root = tk.Tk()
+    main_app(root).pack(fill=tkc.BOTH, expand=True)
+    root.mainloop()
