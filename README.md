@@ -13,8 +13,8 @@ Picture Perfect is an image management application built in Python version 2.7. 
    * Add a label below each image and choose what information is included, such as image name, date created, and a user entered comment.
    * Add a header or footer to each page and choose what information to include, such as directory name, date/time, page number.
    * Option to define the images layout by doing either one or both of the following:
-    1. Defining the grid size, in columns and rows, for how to display images on each page. This will alert the user that images will automatically resize to try to fit into the grid.
-    2. Defining how many pages the document should be. This also alerts the user that images will be automatically resized. Page count is limited by how many pictures the user has included in the document.
+         1. Defining the grid size, in columns and rows, for how to display images on each page. This will alert the user that images will automatically resize to try to fit into the grid.
+         2. Defining how many pages the document should be. This also alerts the user that images will be automatically resized. Page count is limited by how many pictures the user has included in the document.
 4. Finally the user can either save a pdf document to a specified directory on their computer or print the pdf to a printer on their network.
 
 
